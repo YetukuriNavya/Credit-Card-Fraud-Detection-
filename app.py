@@ -1,11 +1,13 @@
 
 import streamlit as st
 import pandas as pd
-import pickle
+
 
 # Load model and scaler
-model = pickle.load(open("fraud_model.pkl", "rb"))
-scaler = pickle.load(open("scaler.pkl", "rb"))
+import joblib
+
+model = joblib.load("fraud_model.pkl")
+scaler = joblib.load("scaler.pkl")
 
 st.set_page_config(
     page_title="Credit Card Fraud Detection",
