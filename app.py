@@ -1,36 +1,49 @@
-
 import streamlit as st
 import pandas as pd
-
-
-# Load model and scaler
 import joblib
 
-model = joblib.load("fraud_model.pkl")
-scaler = joblib.load("scaler.pkl")
-
+# -----------------------------
+# Page Configuration
+# -----------------------------
 st.set_page_config(
     page_title="Credit Card Fraud Detection",
     page_icon="💳",
     layout="wide"
 )
 
+# -----------------------------
+# Load Model and Scaler
+# -----------------------------
+try:
+    model = joblib.load("fraud_model.pkl")
+    scaler = joblib.load("scaler.pkl")
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    st.stop()
+
+# -----------------------------
+# Title
+# -----------------------------
 st.title("💳 Credit Card Fraud Detection")
-st.write("Enter the transaction details below.")
+st.write("Enter the transaction details below and click Predict.")
 
-# Inputs
-time = st.number_input("Time", value=0.0)
+# -----------------------------
+# User Inputs
+# -----------------------------
+time = st.number_input("Time", min_value=0.0, value=0.0)
 
-values = []
+features = []
 
-for i in range(1,29):
-    values.append(st.number_input(f"V{i}", value=0.0))
+for i in range(1, 29):
+    value = st.number_input(f"V{i}", value=0.0, format="%.6f")
+    features.append(value)
 
-amount = st.number_input("Amount", value=0.0)
+amount = st.number_input("Amount", min_value=0.0, value=0.0)
 
+# -----------------------------
+# Prediction
+# -----------------------------
 if st.button("Predict"):
-
-    data = [[time] + values + [amount]]
 
     columns = [
         "Time",
@@ -42,15 +55,21 @@ if st.button("Predict"):
         "Amount"
     ]
 
+    data = [[time] + features + [amount]]
+
     df = pd.DataFrame(data, columns=columns)
 
-    # Scale Time and Amount
-    df["Time"] = scaler.transform(df[["Time"]])
-    df["Amount"] = scaler.transform(df[["Amount"]])
+    try:
+        # Scale Time and Amount
+        df["Time"] = scaler.transform(df[["Time"]]).flatten()
+        df["Amount"] = scaler.transform(df[["Amount"]]).flatten()
 
-    prediction = model.predict(df)
+        prediction = model.predict(df)
 
-    if prediction[0] == 0:
-        st.success("✅ Legitimate Transaction")
-    else:
-        st.error("🚨 Fraudulent Transaction")
+        if prediction[0] == 0:
+            st.success("✅ Legitimate Transaction")
+        else:
+            st.error("🚨 Fraudulent Transaction")
+
+    except Exception as e:
+        st.error(f"Prediction Error: {e}")
